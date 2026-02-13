@@ -140,13 +140,16 @@ async function performCheckInOnSheets(job: CheckInJob): Promise<void> {
 
   // 4. WRITE: conditional update
   const timestamp = new Date().toISOString();
-  const success = await sheetsClient.conditionalUpdate(event, rowIndex, {
-    expectedCurrentValue: guest.checkin ? 'SI' : '', // Dovrebbe essere vuoto
-    guestId: job.guestId,
-    checkin: true,
-    checkinTime: timestamp,
-    entrance: job.entrance,
-    checkedInBy: job.checkedInBy,
+  const success = await sheetsClient.conditionalUpdate({
+    event,
+    rowIndex,
+    expectedCurrentValue: guest.checkin,
+    newValues: {
+      checkin: 'SI',
+      checkinTime: timestamp,
+      entrance: job.entrance,
+      checkedInBy: job.checkedInBy,
+    },
   });
 
   if (!success) {
