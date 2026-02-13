@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Events collection
+    match /events/{eventId} {
+      // Event metadata - read only via API
+      match /metadata/{document=**} {
+        allow read, write: if false; // Only backend can access
+      }
+
+      // Guests sub-collection - read only via API
+      match /guests/{guestId} {
+        allow read, write: if false; // Only backend can access
+      }
+    }
+
+    // Dead letter queue - backend only
+    match /_deadLetterQueue/{document=**} {
+      allow read, write: if false; // Only backend can access
+    }
+  }
+}

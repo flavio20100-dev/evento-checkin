@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateEventAccess } from '@/lib/auth/permissions';
-import { addCheckInToQueue } from '@/lib/queue/checkin-queue';
-import { undoCheckIn, ConflictError } from '@/lib/sheets/checkin';
+import { getFirestoreClient, ConflictError } from '@/lib/firestore/client';
 import { CheckInSchema } from '@/lib/validation/schemas';
 
 /**
  * POST /api/events/[eventId]/checkin
  * Check-in invitato (hostess con event code)
  *
- * NUOVO: Usa queue system per evitare sovraccarico Google Sheets API
- * - Risponde immediatamente (no timeout)
- * - Processing in background
- * - Optimistic UI mostra check-in subito
+ * FIRESTORE VERSION - A PROVA DI BOMBA:
+ * - Transazioni atomiche (impossibile doppio check-in)
+ * - Retry automatico (max 5 tentativi)
+ * - Persistenza garantita
+ * - Sync a Sheets in background (Vercel Cron)
  */
 export async function POST(
   req: NextRequest,
@@ -48,30 +48,41 @@ export async function POST(
       );
     }
 
-    // NUOVO: Aggiungi a queue invece di scrivere immediatamente
-    // Risponde subito, processing in background
-    const queueResult = await addCheckInToQueue(
+    // FIRESTORE: Transazione atomica con retry automatico
+    const firestoreClient = getFirestoreClient();
+
+    const checkInResult = await firestoreClient.performCheckIn(
       params.eventId,
       result.data.guestId,
-      eventCode,
       {
         entrance: result.data.entrance,
         checkedInBy: result.data.checkedInBy,
       }
     );
 
-    // Risposta immediata (optimistic UI già aggiornata)
+    // Successo garantito (altrimenti avrebbe fatto throw)
     return NextResponse.json({
       success: true,
-      queued: true,
       guestId: result.data.guestId,
-      timestamp: new Date().toISOString(),
+      timestamp: checkInResult.timestamp,
     });
   } catch (error: any) {
-    console.error('Check-in queue error:', error);
+    // ConflictError: invitato già checked-in
+    if (error instanceof ConflictError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: error.code,
+          checkinTime: error.checkinTime,
+        },
+        { status: 409 }
+      );
+    }
+
+    console.error('[CheckIn] Error:', error);
 
     return NextResponse.json(
-      { error: error.message || 'Check-in fallito' },
+      { error: error.message || 'Check-in fallito, riprova' },
       { status: 500 }
     );
   }
@@ -116,12 +127,13 @@ export async function DELETE(
       );
     }
 
-    // Undo check-in
-    const result = await undoCheckIn(event, guestId);
+    // FIRESTORE: Undo check-in con transazione atomica
+    const firestoreClient = getFirestoreClient();
+    const result = await firestoreClient.undoCheckIn(params.eventId, guestId);
 
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('Undo check-in error:', error);
+    console.error('[UndoCheckIn] Error:', error);
 
     return NextResponse.json(
       { error: error.message || 'Annullamento check-in fallito' },

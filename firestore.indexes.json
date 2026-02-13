@@ -1,0 +1,47 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "guests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "checkin",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "cognome",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "guests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "_syncedToSheets",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "_lastModified",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "guests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "checkin",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "checkinTime",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -396,6 +396,118 @@ export class SheetsClient {
   }
 
   /**
+   * Batch update guests (per sync da Firestore)
+   * Aggiorna più guests in una singola chiamata API
+   */
+  async batchUpdateGuests(
+    event: Event,
+    updates: Array<{
+      rowIndex: number;
+      values: {
+        checkin?: string;
+        checkinTime?: string;
+        entrance?: string;
+        checkedInBy?: string;
+      };
+    }>
+  ): Promise<void> {
+    if (updates.length === 0) {
+      return;
+    }
+
+    try {
+      // Get headers to determine column positions
+      const headersResponse = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: event.sheetId,
+        range: `${event.tabName}!1:1`,
+      });
+
+      const headers = (headersResponse.data.values?.[0] || []).map((h) =>
+        String(h).toLowerCase()
+      );
+
+      const mappings = event.columnMappings || {
+        nome: 'nome',
+        cognome: 'cognome',
+        azienda: 'azienda',
+        guestId: 'guestid',
+        checkin: 'checkin',
+        checkinTime: 'checkintime',
+        entrance: 'entrance',
+        checkedInBy: 'checkedinby',
+      };
+
+      const checkinIdx = headers.indexOf(mappings.checkin.toLowerCase());
+      const checkinTimeIdx = headers.indexOf(mappings.checkinTime.toLowerCase());
+      const entranceIdx = mappings.entrance
+        ? headers.indexOf(mappings.entrance.toLowerCase())
+        : -1;
+      const checkedInByIdx = mappings.checkedInBy
+        ? headers.indexOf(mappings.checkedInBy.toLowerCase())
+        : -1;
+
+      if (checkinIdx === -1) {
+        throw new Error('Checkin column not found');
+      }
+
+      const colToLetter = (col: number) => String.fromCharCode(65 + col);
+
+      // Build batch update data
+      const batchData: any[] = [];
+
+      for (const update of updates) {
+        const { rowIndex, values } = update;
+
+        // Check-in column
+        if (values.checkin !== undefined) {
+          batchData.push({
+            range: `${event.tabName}!${colToLetter(checkinIdx)}${rowIndex}`,
+            values: [[values.checkin]],
+          });
+        }
+
+        // Check-in time column
+        if (values.checkinTime !== undefined && checkinTimeIdx >= 0) {
+          batchData.push({
+            range: `${event.tabName}!${colToLetter(checkinTimeIdx)}${rowIndex}`,
+            values: [[values.checkinTime]],
+          });
+        }
+
+        // Entrance column
+        if (values.entrance !== undefined && entranceIdx >= 0) {
+          batchData.push({
+            range: `${event.tabName}!${colToLetter(entranceIdx)}${rowIndex}`,
+            values: [[values.entrance]],
+          });
+        }
+
+        // Checked-in by column
+        if (values.checkedInBy !== undefined && checkedInByIdx >= 0) {
+          batchData.push({
+            range: `${event.tabName}!${colToLetter(checkedInByIdx)}${rowIndex}`,
+            values: [[values.checkedInBy]],
+          });
+        }
+      }
+
+      // Execute batch update
+      await this.sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: event.sheetId,
+        requestBody: {
+          valueInputOption: 'USER_ENTERED',
+          data: batchData,
+        },
+      });
+
+      console.log(`[Sheets] ✅ Batch updated ${updates.length} guests`);
+    } catch (error) {
+      console.error('[Sheets] Batch update failed:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Aggiunge colonne check-in se mancanti
    */
   async ensureCheckInColumns(event: Event): Promise<void> {

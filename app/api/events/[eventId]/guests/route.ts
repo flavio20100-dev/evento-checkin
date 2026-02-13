@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSheetsClient } from '@/lib/sheets/client';
+import { getFirestoreClient } from '@/lib/firestore/client';
 import { validateEventAccess } from '@/lib/auth/permissions';
 
 /**
  * GET /api/events/[eventId]/guests
  * Lista invitati per evento
  * Richiede header X-Event-Code (hostess) o session auth (admin)
+ *
+ * FIRESTORE VERSION:
+ * - Lettura da Firestore (molto più veloce)
+ * - No sovraccarico Google Sheets API
+ * - Sync a Sheets in background via Cron
  */
 export async function GET(
   req: NextRequest,
@@ -31,13 +36,13 @@ export async function GET(
       );
     }
 
-    // Fetch guests
-    const sheetsClient = getSheetsClient();
-    const guests = await sheetsClient.getGuests(event);
+    // FIRESTORE: Fetch guests (molto più veloce di Sheets)
+    const firestoreClient = getFirestoreClient();
+    const guests = await firestoreClient.getGuests(params.eventId);
 
     return NextResponse.json(guests);
   } catch (error: any) {
-    console.error('Error fetching guests:', error);
+    console.error('[GetGuests] Error:', error);
     return NextResponse.json(
       { error: error.message || 'Impossibile recuperare lista' },
       { status: 500 }
