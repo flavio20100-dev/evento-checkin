@@ -120,10 +120,16 @@ async function performCheckInOnSheets(job: CheckInJob): Promise<void> {
   }
 
   // 2. READ: trova guest
-  const { guest, rowIndex } = await sheetsClient.findGuestByIdWithRow(
+  const guestData = await sheetsClient.findGuestByIdWithRow(
     event,
     job.guestId
   );
+
+  if (!guestData) {
+    throw new Error(`Guest ${job.guestId} non trovato`);
+  }
+
+  const { guest, rowIndex } = guestData;
 
   // 3. CHECK: già fatto check-in?
   if (guest.checkin) {
@@ -146,12 +152,12 @@ async function performCheckInOnSheets(job: CheckInJob): Promise<void> {
   if (!success) {
     // Conditional update fallito (race condition o guest già checked-in)
     // Verifica se è perché nel frattempo è stato fatto check-in
-    const { guest: updatedGuest } = await sheetsClient.findGuestByIdWithRow(
+    const updatedData = await sheetsClient.findGuestByIdWithRow(
       event,
       job.guestId
     );
 
-    if (updatedGuest.checkin) {
+    if (updatedData && updatedData.guest.checkin) {
       // Già fatto da qualcun altro, OK
       console.log(`[Queue] ${job.guestId} già checked-in da altro worker`);
       return;
