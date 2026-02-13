@@ -27,13 +27,6 @@ export function useUndoCheckIn() {
 
       return response.json();
     },
-    onSuccess: (_, variables) => {
-      // Invalida la query guests per aggiornare la lista (con delay)
-      setTimeout(() => {
-        queryClient.invalidateQueries({
-          queryKey: ['guests', variables.eventId],
-        });
-      }, 1500);
-    },
+    // NO auto-invalidation: lascia solo polling a 60s per ridurre carico API
   });
 }

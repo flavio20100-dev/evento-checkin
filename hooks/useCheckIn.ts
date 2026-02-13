@@ -10,11 +10,9 @@ interface CheckInMutationData {
   entrance?: string;
 }
 
-// Debounce timer per invalidazioni multiple
-let invalidateTimer: NodeJS.Timeout | null = null;
-
 /**
  * Hook per check-in mutation con optimistic update
+ * NO auto-invalidation: usa solo polling a 60s per sync
  */
 export function useCheckIn() {
   const queryClient = useQueryClient();
@@ -105,17 +103,7 @@ export function useCheckIn() {
       }
     },
 
-    // Refetch on success (con debounce per batch updates)
-    onSuccess: (data, variables) => {
-      // Debounce: se ci sono check-in multipli, invalida solo una volta
-      if (invalidateTimer) {
-        clearTimeout(invalidateTimer);
-      }
-
-      invalidateTimer = setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['guests', variables.eventId] });
-        invalidateTimer = null;
-      }, 5000); // 5s di delay: aspetta che finiscano tutti i check-in
-    },
+    // NO onSuccess invalidation: lascia solo polling a 60s per ridurre carico API
+    // Optimistic update gestisce l'UI, polling sincronizza in background
   });
 }

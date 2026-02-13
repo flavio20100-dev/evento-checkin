@@ -5,7 +5,7 @@ import type { Guest } from '@/types/guest';
 
 /**
  * Hook per polling lista invitati
- * Intervallo fisso 5s per MVP (Fase 2: adaptive 3s/10s)
+ * Intervallo 60s: optimistic update gestisce l'UI, polling solo per sync lenta
  */
 export function useGuests(eventId: string, eventCode: string) {
   return useQuery<Guest[]>({
@@ -24,8 +24,8 @@ export function useGuests(eventId: string, eventCode: string) {
 
       return response.json();
     },
-    refetchInterval: 30000, // 30 secondi (massima riduzione conflitti)
-    staleTime: 25000, // Cache valida 25 secondi
+    refetchInterval: 60000, // 60 secondi: sync lenta, evita sovraccarico API
+    staleTime: 55000, // Cache valida 55 secondi
     enabled: !!eventId && !!eventCode,
     retry: 3,
     retryOnMount: false, // Non ritentare al mount se ha già dati
