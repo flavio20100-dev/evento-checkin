@@ -28,7 +28,12 @@ export function useGuests(eventId: string, eventCode: string) {
     staleTime: 25000, // Cache valida 25 secondi
     enabled: !!eventId && !!eventCode,
     retry: 3,
+    retryOnMount: false, // Non ritentare al mount se ha già dati
     refetchOnWindowFocus: false, // Evita refetch extra
+    // Mantieni dati precedenti durante refetch per evitare flash di errori
+    placeholderData: (previousData) => previousData,
+    // Non mostrare errore se abbiamo già dati in cache (errori temporanei)
+    throwOnError: false,
   });
 }
 
