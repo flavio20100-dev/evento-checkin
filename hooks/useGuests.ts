@@ -24,8 +24,8 @@ export function useGuests(eventId: string, eventCode: string) {
 
       return response.json();
     },
-    refetchInterval: 10000, // 10 secondi (riduce conflitti)
-    staleTime: 8000, // Cache valida 8 secondi (riduce richieste)
+    refetchInterval: 30000, // 30 secondi (massima riduzione conflitti)
+    staleTime: 25000, // Cache valida 25 secondi
     enabled: !!eventId && !!eventCode,
     retry: 3,
     refetchOnWindowFocus: false, // Evita refetch extra
