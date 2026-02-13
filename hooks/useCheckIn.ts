@@ -18,25 +18,46 @@ export function useCheckIn() {
 
   return useMutation({
     mutationFn: async (data: CheckInMutationData) => {
-      const response = await fetch(`/api/events/${data.eventId}/checkin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Event-Code': data.eventCode,
-        },
-        body: JSON.stringify({
-          guestId: data.guestId,
-          eventId: data.eventId,
-          entrance: data.entrance,
-        }),
-      });
+      // Retry automatico con backoff esponenziale per race conditions
+      let lastError;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const response = await fetch(`/api/events/${data.eventId}/checkin`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Event-Code': data.eventCode,
+            },
+            body: JSON.stringify({
+              guestId: data.guestId,
+              eventId: data.eventId,
+              entrance: data.entrance,
+            }),
+          });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Check-in fallito');
+          if (!response.ok) {
+            const error = await response.json();
+
+            // Se è un conflitto (409), ritenta dopo un delay
+            if (response.status === 409 && attempt < 2) {
+              lastError = new Error(error.error || 'Check-in fallito');
+              // Backoff esponenziale: 500ms, 1000ms
+              await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+              continue;
+            }
+
+            throw new Error(error.error || 'Check-in fallito');
+          }
+
+          return response.json();
+        } catch (err) {
+          if (attempt === 2) throw err; // Ultimo tentativo fallito
+          lastError = err;
+          await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+        }
       }
 
-      return response.json();
+      throw lastError;
     },
 
     // Optimistic update
