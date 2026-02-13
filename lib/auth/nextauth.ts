@@ -1,6 +1,4 @@
 import GoogleProvider from 'next-auth/providers/google';
-import type { User, Account, Profile, Session } from 'next-auth';
-import type { JWT } from 'next-auth/jwt';
 
 /**
  * NextAuth.js Configuration
@@ -23,7 +21,7 @@ export const authOptions = {
     /**
      * Verifica se utente è autorizzato ad accedere (whitelist)
      */
-    async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: Profile }) {
+    async signIn({ user, account, profile }: any) {
       if (!user.email) {
         return false;
       }
@@ -56,9 +54,9 @@ export const authOptions = {
     /**
      * Aggiunge user ID alla session
      */
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async session({ session, token }: any) {
       if (session.user) {
-        (session.user as any).id = token.sub!;
+        session.user.id = token.sub!;
       }
       return session;
     },
@@ -66,9 +64,9 @@ export const authOptions = {
     /**
      * JWT callback
      */
-    async jwt({ token, user, account }: { token: JWT; user?: User; account?: Account | null }) {
+    async jwt({ token, user, account }: any) {
       if (user) {
-        (token as any).id = user.id;
+        token.id = user.id;
       }
       return token;
     },
