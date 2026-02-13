@@ -1,11 +1,10 @@
-import { AuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 
 /**
  * NextAuth.js Configuration
  * Gestisce Google OAuth per admin e whitelist email/domini
  */
-export const authOptions: AuthOptions = {
+export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
