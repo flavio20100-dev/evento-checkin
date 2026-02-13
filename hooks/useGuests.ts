@@ -24,10 +24,11 @@ export function useGuests(eventId: string, eventCode: string) {
 
       return response.json();
     },
-    refetchInterval: 5000, // MVP: 5 secondi fissi
-    staleTime: 2000, // Cache valida 2 secondi
+    refetchInterval: 10000, // 10 secondi (riduce conflitti)
+    staleTime: 8000, // Cache valida 8 secondi (riduce richieste)
     enabled: !!eventId && !!eventCode,
-    retry: 2,
+    retry: 3,
+    refetchOnWindowFocus: false, // Evita refetch extra
   });
 }
 

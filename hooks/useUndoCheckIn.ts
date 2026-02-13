@@ -28,10 +28,12 @@ export function useUndoCheckIn() {
       return response.json();
     },
     onSuccess: (_, variables) => {
-      // Invalida la query guests per aggiornare la lista
-      queryClient.invalidateQueries({
-        queryKey: ['guests', variables.eventId],
-      });
+      // Invalida la query guests per aggiornare la lista (con delay)
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ['guests', variables.eventId],
+        });
+      }, 1500);
     },
   });
 }

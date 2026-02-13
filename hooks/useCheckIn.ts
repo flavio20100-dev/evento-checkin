@@ -81,9 +81,13 @@ export function useCheckIn() {
       }
     },
 
-    // Refetch on success
+    // Refetch on success (con delay per batch updates)
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['guests', variables.eventId] });
+      // Delay di 1.5s per permettere a Google Sheets di propagare
+      // e per batch multiple invalidazioni simultanee
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['guests', variables.eventId] });
+      }, 1500);
     },
   });
 }
