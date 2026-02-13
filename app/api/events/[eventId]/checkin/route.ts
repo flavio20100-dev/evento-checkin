@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateEventAccess } from '@/lib/auth/permissions';
-import { performCheckIn, undoCheckIn, ConflictError } from '@/lib/sheets/checkin';
+import { addCheckInToQueue } from '@/lib/queue/checkin-queue';
+import { undoCheckIn, ConflictError } from '@/lib/sheets/checkin';
 import { CheckInSchema } from '@/lib/validation/schemas';
 
 /**
  * POST /api/events/[eventId]/checkin
  * Check-in invitato (hostess con event code)
+ *
+ * NUOVO: Usa queue system per evitare sovraccarico Google Sheets API
+ * - Risponde immediatamente (no timeout)
+ * - Processing in background
+ * - Optimistic UI mostra check-in subito
  */
 export async function POST(
   req: NextRequest,
@@ -42,27 +48,27 @@ export async function POST(
       );
     }
 
-    // Perform check-in con lock ottimistico
-    const checkInResult = await performCheckIn(event, result.data.guestId, {
-      entrance: result.data.entrance,
-      checkedInBy: result.data.checkedInBy,
+    // NUOVO: Aggiungi a queue invece di scrivere immediatamente
+    // Risponde subito, processing in background
+    const queueResult = await addCheckInToQueue(
+      params.eventId,
+      result.data.guestId,
+      eventCode,
+      {
+        entrance: result.data.entrance,
+        checkedInBy: result.data.checkedInBy,
+      }
+    );
+
+    // Risposta immediata (optimistic UI già aggiornata)
+    return NextResponse.json({
+      success: true,
+      queued: true,
+      guestId: result.data.guestId,
+      timestamp: new Date().toISOString(),
     });
-
-    return NextResponse.json(checkInResult);
   } catch (error: any) {
-    console.error('Check-in error:', error);
-
-    // Gestione ConflictError
-    if (error instanceof ConflictError) {
-      return NextResponse.json(
-        {
-          error: error.message,
-          code: error.code,
-          checkinTime: error.checkinTime,
-        },
-        { status: 409 }
-      );
-    }
+    console.error('Check-in queue error:', error);
 
     return NextResponse.json(
       { error: error.message || 'Check-in fallito' },
