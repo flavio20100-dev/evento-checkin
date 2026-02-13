@@ -151,6 +151,10 @@ export class SyncService {
           checkedInBy: guest.checkedInBy || '',
         },
       });
+
+      console.log(
+        `[Sync] 📝 ${guest.cognome} ${guest.nome} → Sheet row ${rowIndex}`
+      );
     }
 
     if (updates.length === 0) {

@@ -491,6 +491,12 @@ export class SheetsClient {
         }
       }
 
+      // Debug: log batch data
+      console.log(
+        `[Sheets] 📋 Batch update data:`,
+        JSON.stringify(batchData.slice(0, 10), null, 2)
+      );
+
       // Execute batch update
       await this.sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: event.sheetId,
