@@ -10,6 +10,9 @@ interface CheckInMutationData {
   entrance?: string;
 }
 
+// Debounce timer per invalidazioni multiple
+let invalidateTimer: NodeJS.Timeout | null = null;
+
 /**
  * Hook per check-in mutation con optimistic update
  */
@@ -102,13 +105,17 @@ export function useCheckIn() {
       }
     },
 
-    // Refetch on success (con delay per batch updates)
+    // Refetch on success (con debounce per batch updates)
     onSuccess: (data, variables) => {
-      // Delay di 1.5s per permettere a Google Sheets di propagare
-      // e per batch multiple invalidazioni simultanee
-      setTimeout(() => {
+      // Debounce: se ci sono check-in multipli, invalida solo una volta
+      if (invalidateTimer) {
+        clearTimeout(invalidateTimer);
+      }
+
+      invalidateTimer = setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['guests', variables.eventId] });
-      }, 1500);
+        invalidateTimer = null;
+      }, 5000); // 5s di delay: aspetta che finiscano tutti i check-in
     },
   });
 }
