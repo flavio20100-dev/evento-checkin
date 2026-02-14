@@ -1,6 +1,7 @@
 'use client';
 
 import { EventForm } from '@/components/admin/EventForm';
+import { SyncButton } from '@/components/admin/SyncButton';
 import { useEvents } from '@/hooks/useEvents';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Calendar, Code2, ExternalLink } from 'lucide-react';
@@ -15,43 +16,46 @@ export default function AdminPage() {
         {/* Create Event Form */}
         <EventForm />
 
-        {/* Instructions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Istruzioni Setup</CardTitle>
-            <CardDescription>
-              Come preparare il Google Sheet
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div>
-              <p className="font-medium mb-1">1. Prepara Google Sheet:</p>
-              <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>Crea foglio con colonne: Nome, Cognome, Azienda</li>
-                <li>Il sistema aggiungerà automaticamente le colonne check-in</li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="font-medium mb-1">2. Condividi Sheet:</p>
-              <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>Condividi con Service Account email (Editor)</li>
-                <li>Trova email in Google Cloud Console</li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="font-medium mb-1">3. Copia Sheet ID:</p>
-              <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>
-                  Dall'URL: docs.google.com/spreadsheets/d/
-                  <span className="font-mono">[ID]</span>/edit
-                </li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Manual Sync Button */}
+        <SyncButton />
       </div>
+
+      {/* Instructions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Istruzioni Setup</CardTitle>
+          <CardDescription>
+            Come preparare il Google Sheet
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <div>
+            <p className="font-medium mb-1">1. Prepara Google Sheet:</p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-1">
+              <li>Crea foglio con colonne: Nome, Cognome, Azienda</li>
+              <li>Il sistema aggiungerà automaticamente le colonne check-in</li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="font-medium mb-1">2. Condividi Sheet:</p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-1">
+              <li>Condividi con Service Account email (Editor)</li>
+              <li>Trova email in Google Cloud Console</li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="font-medium mb-1">3. Copia Sheet ID:</p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-1">
+              <li>
+                Dall'URL: docs.google.com/spreadsheets/d/
+                <span className="font-mono">[ID]</span>/edit
+              </li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Events List */}
       <Card>
