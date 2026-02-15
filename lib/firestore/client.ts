@@ -274,12 +274,12 @@ class FirestoreClient {
   async getUnsyncedGuests(eventId: string): Promise<Guest[]> {
     const db = this.getDb();
 
+    // Query for guests that haven't been synced (false or null)
     const snapshot = await db
       .collection('events')
       .doc(eventId)
       .collection('guests')
-      .where('_syncedToSheets', '==', false)
-      .orderBy('_lastModified', 'asc')
+      .where('_syncedToSheets', 'in', [false, null])
       .limit(100) // Max 100 per batch
       .get();
 

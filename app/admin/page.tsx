@@ -2,6 +2,9 @@
 
 import { EventForm } from '@/components/admin/EventForm';
 import { SyncButton } from '@/components/admin/SyncButton';
+import { MigrateButton } from '@/components/admin/MigrateButton';
+import { InitialLoadButton } from '@/components/admin/InitialLoadButton';
+import { DeleteEventButton } from '@/components/admin/DeleteEventButton';
 import { useEvents } from '@/hooks/useEvents';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Calendar, Code2, ExternalLink } from 'lucide-react';
@@ -19,6 +22,9 @@ export default function AdminPage() {
         {/* Manual Sync Button */}
         <SyncButton />
       </div>
+
+      {/* Data Migration (one-time operation) */}
+      <MigrateButton />
 
       {/* Instructions */}
       <Card>
@@ -97,6 +103,16 @@ export default function AdminPage() {
                               {event.eventCode}
                             </span>
                           </div>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2">
+                          <InitialLoadButton
+                            eventCode={event.eventCode}
+                            eventName={event.name}
+                          />
+                          <DeleteEventButton
+                            eventId={event.eventId}
+                            eventName={event.name}
+                          />
                         </div>
                       </div>
                       <Link

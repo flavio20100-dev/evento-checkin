@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSyncService } from '@/lib/firestore/sync';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/nextauth';
+import { auth } from '@/lib/auth/nextauth';
 
 /**
  * POST /api/admin/sync
@@ -11,7 +10,7 @@ import { authOptions } from '@/lib/auth/nextauth';
  */
 export async function POST(req: NextRequest) {
   // Check admin authentication
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     return NextResponse.json(

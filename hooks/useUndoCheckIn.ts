@@ -27,6 +27,12 @@ export function useUndoCheckIn() {
 
       return response.json();
     },
-    // NO auto-invalidation: lascia solo polling a 60s per ridurre carico API
+    // Auto-invalidation: aggiorna lista immediatamente dopo undo
+    onSuccess: (data, variables) => {
+      // Invalida la query dei guests per aggiornare la lista in tempo reale
+      queryClient.invalidateQueries({
+        queryKey: ['guests', variables.eventId]
+      });
+    },
   });
 }
