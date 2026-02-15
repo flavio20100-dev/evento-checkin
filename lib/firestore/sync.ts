@@ -310,12 +310,35 @@ export class SyncService {
             .collection('guests')
             .doc(guest.guestId);
 
-          firestoreBatch.set(guestRef, {
-            ...guest,
-            _syncedToSheets: true, // Già sincronizzato (viene da Sheets)
-            _lastModified: new Date(),
-            _version: 1,
-          });
+          // Check se il document esiste già
+          const existingDoc = await guestRef.get();
+
+          if (existingDoc.exists) {
+            // Document esiste: fai MERGE per non sovrascrivere check-in
+            const existingData = existingDoc.data();
+            firestoreBatch.set(
+              guestRef,
+              {
+                // Aggiorna solo dati anagrafici (non check-in)
+                nome: guest.nome,
+                cognome: guest.cognome,
+                azienda: guest.azienda || '',
+                _sheetRowIndex: (guest as any)._rowIndex,
+                _lastModified: new Date(),
+                // NON toccare: checkin, checkinTime, entrance, checkedInBy
+                // Se il guest ha già fatto check-in, mantieni quello!
+              },
+              { merge: true }
+            );
+          } else {
+            // Document nuovo: crea normalmente
+            firestoreBatch.set(guestRef, {
+              ...guest,
+              _syncedToSheets: true, // Già sincronizzato (viene da Sheets)
+              _lastModified: new Date(),
+              _version: 1,
+            });
+          }
         }
 
         await firestoreBatch.commit();
