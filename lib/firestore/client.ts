@@ -27,7 +27,7 @@ class FirestoreClient {
   /**
    * Inizializza Firebase Admin SDK (lazy init)
    */
-  private getDb(): Firestore {
+  public getDb(): Firestore {
     if (this.db) {
       return this.db;
     }
